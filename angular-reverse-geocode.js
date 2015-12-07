@@ -11,25 +11,35 @@
             template: '<div></div>',
             scope: {
                 lat: '=',
-                lng: '='
+                lng: '=',
+                mapApiPromise: '=?'
             },
             link: function (scope, element) {
-                scope.$watchGroup(['lat', 'lng'], function () {
-                    var geocoder = new google.maps.Geocoder();
-                    var latlng = new google.maps.LatLng(scope.lat, scope.lng);
-                    geocoder.geocode({ 'latLng': latlng }, function (results, status) {
-                        if (status == google.maps.GeocoderStatus.OK) {
-                            if (results[1]) {
-                                element.text(results[1].formatted_address);
-                            } else {
-                                element.text('Location not found');
-                            }
-                        } else {
-                            element.text('Geocoder failed due to: ' + status);
-                        }
-                    });
+                if (!scope.mapApiPromise) return watchLatLng();
+
+                scope.mapApiPromise.then(function (maps) {
+                    watchLatLng(maps);
                 });
 
+                function watchLatLng(mapApi) {
+                    var mapsApi = mapApi || google.maps;
+
+                    scope.$watchGroup(['lat', 'lng'], function () {
+                        var geocoder = new mapsApi.Geocoder();
+                        var latlng = new mapsApi.LatLng(scope.lat, scope.lng);
+                        geocoder.geocode({ 'latLng': latlng }, function (results, status) {
+                            if (status == google.maps.GeocoderStatus.OK) {
+                                if (results[1]) {
+                                    element.text(results[1].formatted_address);
+                                } else {
+                                    element.text('Location not found');
+                                }
+                            } else {
+                                element.text('Geocoder failed due to: ' + status);
+                            }
+                        });
+                    });
+                }
             },
             replace: true
         }
